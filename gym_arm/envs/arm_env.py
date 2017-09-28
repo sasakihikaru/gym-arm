@@ -49,8 +49,8 @@ class ArmEnv(gym.Env):
     return self.state, reward, done, {}
 
   def _reset(self):
-    init_step = 0.1
-    self.state = self.np_random.uniform(np.pi-init_step, np.pi+init_step, 1)
+    init_step = 0.5
+    self.state = self.np_random.uniform(np.pi-init_step, np.pi, 1) * [-1, 1][np.random.randint(1)]
     self.goal_position = self.np_random.uniform(low=-1*init_step, high=init_step)
     return self.state
 
@@ -93,16 +93,19 @@ class ArmEnv(gym.Env):
       
       # agent circle
       self.agent = rendering.Transform()
+      agent_arm = rendering.make_polyline([(0, 0), (state_radius, 0)])
+      agent_arm.add_attr(self.agent)
+      agent_arm.set_linewidth(4)
+      self.viewer.add_geom(agent_arm)
       agent_circle = rendering.make_circle(r)
+      agent_circle.add_attr(rendering.Transform(translation=(state_radius, 0)))
       agent_circle.set_color(0, 255, 0)
       agent_circle.add_attr(self.agent)
       self.viewer.add_geom(agent_circle)
 
     pos = self.state[0]
-    self.agent.set_translation(
-      state_radius * np.cos(pos) + world_center[0],
-      state_radius * np.sin(pos) + world_center[1]
-    )
+    self.agent.set_translation(world_center[0], world_center[1])
+    self.agent.set_rotation(pos)
 
 
     return self.viewer.render(return_rgb_array = mode=='rgb_array')
