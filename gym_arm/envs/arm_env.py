@@ -65,20 +65,45 @@ class ArmEnv(gym.Env):
     screen_height = 400
     
     world_center = (screen_width/2, screen_height/2)
+    state_radius = 150
+    r = 10
 
     if self.viewer is None:
       from gym.envs.classic_control import rendering
       self.viewer = rendering.Viewer(screen_width, screen_height)
 
-      radius = 150
-      ts = np.linspace(0, 2*np.pi, 100)
-      xs = radius * np.cos(ts) + world_center[0]
-      ys = radius * np.sin(ts) + world_center[1]
-      xys = list(zip(xs, ys))
+      # state line
+      self.state_line = rendering.make_circle(state_radius, filled=False)
+      self.state_line.add_attr(rendering.Transform(translation=world_center))
+      self.viewer.add_geom(self.state_line)
 
-      self.track = rendering.make_polyline(xys)
-      self.track.set_linewidth(2)
-      self.viewer.add_geom(self.track)
+      # center circle
+      self.center_line = rendering.make_circle(r)
+      self.center_line.add_attr(rendering.Transform(translation=world_center))
+      self.viewer.add_geom(self.center_line)
+
+      # goal circle
+      self.goal_circle = rendering.make_circle(r)
+      self.goal_circle.set_color(255, 0, 0)
+      self.goal_circle.add_attr(rendering.Transform(translation=(
+        state_radius * np.cos(self.goal_position) + world_center[0],
+        state_radius * np.sin(self.goal_position) + world_center[1]
+      )))
+      self.viewer.add_geom(self.goal_circle)
+      
+      # agent circle
+      self.agent = rendering.Transform()
+      agent_circle = rendering.make_circle(r)
+      agent_circle.set_color(0, 255, 0)
+      agent_circle.add_attr(self.agent)
+      self.viewer.add_geom(agent_circle)
+
+    pos = self.state[0]
+    self.agent.set_translation(
+      state_radius * np.cos(pos) + world_center[0],
+      state_radius * np.sin(pos) + world_center[1]
+    )
+
 
     return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
